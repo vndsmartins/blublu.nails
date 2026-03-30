@@ -1,0 +1,26 @@
+/* Estilo para destacar o frete selecionado */
+.frete-card {
+    transition: all 0.2s ease;
+    border: 2px solid #e5e7eb;
+    background-color: white;
+}
+
+.frete-card:hover {
+    border-color: #f472b6; /* Rosa */
+}
+
+.frete-selecionado {
+    border-color: #059669 !important; /* Verde */
+    background-color: #f0fdf4 !important; /* Verde claro */
+    transform: scale(1.01);
+}
+
+/* Animação de entrada do botão finalizar */
+#area-finalizar {
+    animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
