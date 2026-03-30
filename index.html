@@ -6,7 +6,7 @@
     <title>blublu.nails - Catálogo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .frete-selecionado { border-color: #059669 !important; background-color: #f0fdf4; }
+        .frete-selecionado { border: 2px solid #059669 !important; background-color: #f0fdf4 !important; }
     </style>
 </head>
 <body class="bg-gray-50 p-6">
@@ -14,7 +14,7 @@
     <div class="max-w-5xl mx-auto">
         <h1 class="text-3xl font-bold mb-8 text-center text-gray-800 underline decoration-pink-500">Catálogo de Produtos</h1>
 
-        <div id="vitrine" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             
             <div class="bg-white p-4 rounded-lg shadow border">
                 <img src="https://via.placeholder.com/300" class="w-full h-48 object-cover rounded">
@@ -51,14 +51,14 @@
             </div>
             
             <div class="border-t pt-4">
-                <label class="block mb-2 font-medium">Calcular Frete (CEP):</label>
+                <label class="block mb-2 font-medium text-gray-700">Calcular Frete (CEP):</label>
                 <div class="flex gap-2">
                     <input type="text" id="cep" placeholder="00000-000" class="border p-2 rounded w-full outline-none focus:ring-2 focus:ring-blue-400">
-                    <button onclick="calcularFrete()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">Calcular</button>
+                    <button onclick="calcularFrete()" id="btn-calc" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">Calcular</button>
                 </div>
             </div>
 
-            <div id="resultado-frete" class="mt-4 space-y-2 text-sm text-gray-700"></div>
+            <div id="resultado-frete" class="mt-4 space-y-2"></div>
 
             <div id="area-finalizar" class="hidden mt-8 border-t pt-6">
                 <div class="flex justify-between items-center mb-4 text-xl font-bold text-green-700">
@@ -73,13 +73,15 @@
     </div>
 
     <script>
+        // --- 1. CONFIGURAÇÕES INICIAIS ---
         let carrinho = [];
         let freteEscolhido = null;
-        const WHATSAPP_LOJA = "5581983115644"; // <-- COLOQUE SEU NÚMERO AQUI
+        const WHATSAPP_LOJA = "5581983115644"; // <--- COLOQUE SEU NÚMERO AQUI
 
+        // --- 2. FUNÇÕES DO CARRINHO ---
         function adicionarAoCarrinho(nome, preco) {
             carrinho.push({ name: nome, price: preco });
-            freteEscolhido = null; // Reseta se mudar o carrinho
+            freteEscolhido = null; 
             document.getElementById('area-finalizar').classList.add('hidden');
             atualizarCarrinho();
         }
@@ -94,11 +96,11 @@
                 return;
             }
 
-            const subtotal = carrinho.reduce((sum, i) => sum + i.price, 0);
-            lista.innerHTML = carrinho.map(i => `
-                <div class="flex justify-between py-1 border-b border-gray-50 italic">
-                    <span>• ${i.name}</span>
-                    <span>R$ ${i.price.toFixed(2)}</span>
+            const subtotal = carrinho.reduce((sum, item) => sum + item.price, 0);
+            lista.innerHTML = carrinho.map(item => `
+                <div class="flex justify-between py-1 border-b border-gray-50 italic text-gray-700">
+                    <span>• ${item.name}</span>
+                    <span>R$ ${item.price.toFixed(2)}</span>
                 </div>
             `).join('');
 
@@ -106,14 +108,18 @@
             document.getElementById('resultado-frete').innerHTML = ""; 
         }
 
+        // --- 3. FUNÇÃO DE FRETE ---
         async function calcularFrete() {
-            const cep = document.getElementById('cep').value.replace(/\D/g, '');
+            const cepInput = document.getElementById('cep');
             const resDiv = document.getElementById('resultado-frete');
+            const btn = document.getElementById('btn-calc');
+            const cep = cepInput.value.replace(/\D/g, '');
             
-            if (carrinho.length === 0) return alert("Adicione produtos primeiro!");
-            if (cep.length !== 8) return alert("CEP inválido!");
+            if (carrinho.length === 0) { alert("Adicione produtos primeiro!"); return; }
+            if (cep.length !== 8) { alert("CEP inválido!"); return; }
 
-            resDiv.innerHTML = "<p class='animate-pulse text-blue-600'>Buscando preços...</p>";
+            resDiv.innerHTML = "<p class='animate-pulse text-blue-600 text-center py-2'>Buscando preços...</p>";
+            btn.disabled = true;
 
             try {
                 const response = await fetch('https://blublu-nails.onrender.com/calcular-frete', {
@@ -122,42 +128,60 @@
                     body: JSON.stringify({ cepDestino: cep, produtos: carrinho })
                 });
 
+                if (!response.ok) throw new Error("Erro no servidor");
+
                 const dados = await response.json();
                 const opcoes = Array.isArray(dados) ? dados : (dados.options || []);
 
+                if (opcoes.length === 0) {
+                    resDiv.innerHTML = "<p class='text-red-500'>Nenhum frete disponível.</p>";
+                    return;
+                }
+
                 resDiv.innerHTML = opcoes.map(s => `
                     <div onclick="selecionarFrete(this, '${s.name}', ${s.price})" 
-                         class="p-3 border rounded cursor-pointer flex justify-between items-center hover:bg-gray-50 transition">
+                         class="frete-card p-3 border rounded-lg cursor-pointer flex justify-between items-center hover:bg-gray-50 transition border-gray-200 bg-white">
                         <div>
-                            <span class="font-bold">${s.name}</span>
+                            <span class="font-bold text-gray-800">${s.name}</span>
                             <p class="text-xs text-gray-500">${s.delivery_time} dias úteis</p>
                         </div>
-                        <span class="font-bold">R$ ${parseFloat(s.price).toFixed(2)}</span>
+                        <span class="font-bold text-gray-900">R$ ${parseFloat(s.price).toFixed(2)}</span>
                     </div>
                 `).join('');
 
             } catch (error) {
-                resDiv.innerHTML = "<p class='text-red-500'>Erro ao calcular. Tente novamente.</p>";
+                console.error(error);
+                resDiv.innerHTML = "<p class='text-red-500 text-center'>Erro ao calcular. Tente novamente.</p>";
+            } finally {
+                btn.disabled = false;
             }
         }
 
+        // --- 4. SELEÇÃO E FINALIZAÇÃO ---
         function selecionarFrete(elemento, nome, valor) {
             freteEscolhido = { nome, valor };
 
-            // Remove destaque de todos e adiciona no clicado
-            document.querySelectorAll('#resultado-frete div').forEach(d => d.classList.remove('frete-selecionado', 'border-green-600'));
-            elemento.classList.add('frete-selecionado', 'border-green-600');
+            // Limpa destaque de outros cards
+            document.querySelectorAll('.frete-card').forEach(d => {
+                d.classList.remove('frete-selecionado');
+            });
+            // Adiciona destaque ao selecionado
+            elemento.classList.add('frete-selecionado');
 
-            // Calcula Total Geral
-            const subtotal = carrinho.reduce((sum, i) => sum + i.price, 0);
+            const subtotal = carrinho.reduce((sum, item) => sum + item.price, 0);
             const total = subtotal + valor;
 
             document.getElementById('total-geral').innerText = `R$ ${total.toFixed(2)}`;
             document.getElementById('area-finalizar').classList.remove('hidden');
+            
+            // Rola a tela para o botão de finalizar
+            document.getElementById('area-finalizar').scrollIntoView({ behavior: 'smooth' });
         }
 
         function enviarPedido() {
-            const subtotal = carrinho.reduce((sum, i) => sum + i.price, 0);
+            if (!freteEscolhido) return alert("Escolha uma opção de frete!");
+
+            const subtotal = carrinho.reduce((sum, item) => sum + item.price, 0);
             const total = subtotal + freteEscolhido.valor;
             const cep = document.getElementById('cep').value;
 
@@ -167,8 +191,10 @@
             texto += `\n*Entrega:* ${freteEscolhido.nome} (R$ ${freteEscolhido.valor.toFixed(2)})`;
             texto += `\n*CEP:* ${cep}`;
             texto += `\n\n*TOTAL: R$ ${total.toFixed(2)}*`;
+            texto += `\n\n_Por favor, me envie as informações de pagamento!_`;
 
-            window.open(`https://api.whatsapp.com/send?phone=${&text=${encodeURIComponent(texto)}`, '_blank');
+            const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_LOJA}&text=${encodeURIComponent(texto)}`;
+            window.open(url, '_blank');
         }
     </script>
 </body>
