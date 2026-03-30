@@ -62,7 +62,7 @@
             const resDiv = document.getElementById('resultado-frete');
             resDiv.innerText = "Calculando...";
 
-            const response = await fetch('http://localhost:3000/calcular-frete', {
+            const response = await fetch('https://blublu-nails.onrender.com', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ cepDestino: cep, produtos: carrinho })
