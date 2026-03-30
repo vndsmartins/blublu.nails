@@ -122,7 +122,7 @@ function enviarPedido() {
     texto += `\n*Entrega:* ${freteEscolhido.nome} (R$ ${freteEscolhido.valor.toFixed(2)})`;
     texto += `\n*CEP:* ${cep}`;
     texto += `\n\n*TOTAL: R$ ${total.toFixed(2)}*`;
-    texto += `\n\n_Ah! e também se quiser alterar a cor/tamaho, me envie por aqui☺️`;
+    texto += `\n\nAh! e também se quiser alterar a cor/tamaho, me envie por aqui☺️`;
 
     const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_LOJA}&text=${encodeURIComponent(texto)}`;
     window.open(url, '_blank');
