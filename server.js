@@ -48,7 +48,7 @@ app.post('/calcular-frete', async (req, res) => {
             to: {
                 postal_code: cepDestinoLimpo
             },
-            services: "1,2,17", // 1=SEDEX, 2=PAC, 1=MINI ENVIO
+            services: "1,2,17", // 1=SEDEX, 2=PAC, 17=MINI ENVIO
             options: {
                 own_hand: false,
                 receipt: false,
