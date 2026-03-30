@@ -3,87 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>blublu.nails</title>
+    <title>blublu.nails - Catálogo</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 p-6">
 
     <div class="max-w-5xl mx-auto">
-        <h1 class="text-3xl font-bold mb-8 text-center">Catálogo de Produtos</h1>
+        <h1 class="text-3xl font-bold mb-8 text-center text-pink-600">Catálogo de Produtos</h1>
 
-        <div id="vitrine" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white p-4 rounded-lg shadow">
-                <img src="https://via.placeholder.com/300" class="w-full h-48 object-cover rounded">
-                <h2 class="mt-4 font-bold">Produto Exemplo A</h2>
-                <p class="text-blue-600">R$ 89,90</p>
-                <button onclick="adicionarAoCarrinho('Produto A', 89.90, 0.5, 15, 15, 15)" class="mt-4 w-full bg-black text-white py-2 rounded">Adicionar</button>
-            </div>
-            </div>
-
-            <div id="vitrine" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white p-4 rounded-lg shadow">
-                <img src="https://via.placeholder.com/300" class="w-full h-48 object-cover rounded">
-                <h2 class="mt-4 font-bold">Produto Exemplo B</h2>
-                <p class="text-blue-600">R$ 89,90</p>
-                <button onclick="adicionarAoCarrinho('Produto A', 89.90, 0.5, 15, 15, 15)" class="mt-4 w-full bg-black text-white py-2 rounded">Adicionar</button>
-            </div>
+        <div id="vitrine" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div class="bg-white p-4 rounded-lg shadow border border-gray-100">
+                <img src="https://via.placeholder.com/300" class="w-full h-48 object-cover rounded" alt="Produto A">
+                <h2 class="mt-4 font-bold text-gray-800">Kit Unhas Gel Profissional</h2>
+                <p class="text-pink-600 font-bold">R$ 89,90</p>
+                <button onclick="adicionarAoCarrinho('Kit Unhas Gel', 89.90)" 
+                        class="mt-4 w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded transition">
+                    Adicionar ao Carrinho
+                </button>
             </div>
 
-        <div class="mt-12 bg-white p-6 rounded-lg shadow-lg border">
-            <h2 class="text-xl font-bold mb-4">Seu Carrinho</h2>
-            <div id="lista-carrinho" class="mb-4 text-gray-600 italic">Carrinho vazio...</div>
+            <div class="bg-white p-4 rounded-lg shadow border border-gray-100">
+                <img src="https://via.placeholder.com/300" class="w-full h-48 object-cover rounded" alt="Produto B">
+                <h2 class="mt-4 font-bold text-gray-800">Esmalte Especial Blublu</h2>
+                <p class="text-pink-600 font-bold">R$ 29,90</p>
+                <button onclick="adicionarAoCarrinho('Esmalte Especial', 29.90)" 
+                        class="mt-4 w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded transition">
+                    Adicionar ao Carrinho
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-lg border">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                🛒 Seu Carrinho
+            </h2>
+            <div id="lista-carrinho" class="mb-4 text-gray-600 italic border-b pb-4">
+                Carrinho vazio...
+            </div>
             
-            <div class="border-t pt-4">
-                <label class="block mb-2">Calcular Frete (CEP):</label>
+            <div class="mt-4">
+                <label class="block mb-2 font-medium text-gray-700">Calcular Frete (CEP):</label>
                 <div class="flex gap-2">
-                    <input type="text" id="cep" placeholder="00000-000" class="border p-2 rounded w-full">
-                    <button onclick="calcularFrete()" class="bg-green-600 text-white px-4 py-2 rounded">Calcular</button>
+                    <input type="text" id="cep" placeholder="04516-012" 
+                           class="border p-2 rounded w-full focus:ring-2 focus:ring-pink-300 outline-none">
+                    <button onclick="calcularFrete()" id="btn-calcular"
+                            class="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 disabled:bg-gray-400">
+                        Calcular
+                    </button>
                 </div>
             </div>
-            <div id="resultado-frete" class="mt-4 font-semibold text-green-700"></div>
+            
+            <div id="resultado-frete" class="mt-6 space-y-2"></div>
         </div>
     </div>
 
     <script>
         let carrinho = [];
 
-        function adicionarAoCarrinho(nome, preco, peso, a, l, c) {
-            carrinho.push({ name: nome, price: preco, weight: peso, height: a, width: l, length: c, quantity: 1 });
+        function adicionarAoCarrinho(nome, preco) {
+            // No catálogo, você só precisa do nome e preço. 
+            // O server.js já aplica o peso/medida fixo que definimos!
+            carrinho.push({ name: nome, price: preco, quantity: 1 });
             atualizarCarrinho();
         }
 
         function atualizarCarrinho() {
             const lista = document.getElementById('lista-carrinho');
-            lista.innerHTML = carrinho.map(i => `<div>${i.name} - R$ ${i.price}</div>`).join('');
+            if (carrinho.length === 0) {
+                lista.innerHTML = "Carrinho vazio...";
+                return;
+            }
+            lista.innerHTML = carrinho.map((item, index) => `
+                <div class="flex justify-between py-1 text-gray-700 border-b border-gray-50 italic">
+                    <span>${item.name} (x${item.quantity})</span>
+                    <span class="font-bold">R$ ${item.price.toFixed(2)}</span>
+                </div>
+            `).join('');
         }
 
         async function calcularFrete() {
-            const cep = document.getElementById('cep').value;
+            const cepInput = document.getElementById('cep');
             const resDiv = document.getElementById('resultado-frete');
-            resDiv.innerText = "Calculando...";
+            const btn = document.getElementById('btn-calcular');
+            const cep = cepInput.value.replace(/\D/g, '');
 
-            const response = await fetch('https://blublu-nails.onrender.com', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cepDestino: cep, produtos: carrinho })
-            });
+            if (carrinho.length === 0) {
+                alert("Adicione pelo menos um produto ao carrinho primeiro!");
+                return;
+            }
 
-            const dados = await response.json();
+            if (cep.length !== 8) {
+                alert("Digite um CEP válido com 8 dígitos.");
+                return;
+            }
 
-// Verificamos se 'dados' é uma lista. Se não for, tentamos acessar a propriedade correta.
-const opcoes = Array.isArray(dados) ? dados : (dados.options || []);
+            resDiv.innerHTML = `<p class="text-blue-500 animate-pulse text-center">Consultando SuperFrete... (O primeiro cálculo pode demorar 30s)</p>`;
+            btn.disabled = true;
 
-if (opcoes.length === 0) {
-    resDiv.innerText = "Nenhuma opção de frete encontrada.";
-    return;
-}
+            try {
+                // CORREÇÃO DA URL: Adicionado /calcular-frete
+                const response = await fetch('https://blublu-nails.onrender.com/calcular-frete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        cepDestino: cep, 
+                        produtos: carrinho 
+                    })
+                });
 
-resDiv.innerHTML = opcoes.map(servico => 
-    `<div class="p-2 border-b">
-        <span class="font-bold">${servico.name}:</span> 
-        R$ ${servico.price} (${servico.delivery_time} dias)
-    </div>`
-).join('');
+                if (!response.ok) throw new Error("Erro no servidor");
+
+                const dados = await response.json();
+                
+                // SuperFrete pode retornar os dados direto no array ou dentro de uma propriedade
+                const opcoes = Array.isArray(dados) ? dados : (dados.options || []);
+
+                if (opcoes.length === 0) {
+                    resDiv.innerHTML = "<p class='text-red-500'>Nenhuma opção disponível para este CEP.</p>";
+                    return;
+                }
+
+                resDiv.innerHTML = opcoes.map(servico => {
+                    // Formata preço de "25.50" para "R$ 25,50"
+                    const valorFormatado = parseFloat(servico.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    
+                    return `
+                        <div class="p-3 border rounded-lg flex justify-between items-center bg-green-50 border-green-200">
+                            <div>
+                                <span class="font-bold text-gray-800">${servico.name}</span>
+                                <p class="text-xs text-gray-500">Entrega em até ${servico.delivery_time} dias</p>
+                            </div>
+                            <span class="font-bold text-green-700">${valorFormatado}</span>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Erro no cálculo:', error);
+                resDiv.innerHTML = `<p class="text-red-500">Erro ao conectar com o servidor. Tente novamente em alguns segundos.</p>`;
+            } finally {
+                btn.disabled = false;
+            }
         }
     </script>
 </body>
