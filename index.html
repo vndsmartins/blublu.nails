@@ -75,7 +75,7 @@
     <script>
         let carrinho = [];
         let freteEscolhido = null;
-        const WHATSAPP_LOJA = "5511999999999"; // <-- COLOQUE SEU NÚMERO AQUI
+        const WHATSAPP_LOJA = "5581983115644"; // <-- COLOQUE SEU NÚMERO AQUI
 
         function adicionarAoCarrinho(nome, preco) {
             carrinho.push({ name: nome, price: preco });
@@ -168,7 +168,7 @@
             texto += `\n*CEP:* ${cep}`;
             texto += `\n\n*TOTAL: R$ ${total.toFixed(2)}*`;
 
-            window.open(`https://api.whatsapp.com/send?phone=${WHATSAPP_LOJA}&text=${encodeURIComponent(texto)}`, '_blank');
+            window.open(`https://api.whatsapp.com/send?phone=${&text=${encodeURIComponent(texto)}`, '_blank');
         }
     </script>
 </body>
