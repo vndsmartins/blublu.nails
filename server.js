@@ -7,31 +7,35 @@ app.use(express.json());
 app.use(cors());
 
 // ==========================================
-// 1. CONFIGURAÇÕES OBRIGATÓRIAS (PREENCHA AQUI)
+// 1. CONFIGURAÇÕES OBRIGATÓRIAS
 // ==========================================
 const SUPERFRETE_TOKEN = process.env.SUPERFRETE_TOKEN;
-const CEP_ORIGEM = '50741280'; // Seu CEP (apenas números)
-const SEU_EMAIL = 'seu_email@contato.com'; // Para o User-Agent
+const CEP_ORIGEM = '50741280'; 
+const SEU_EMAIL = 'seu_email@contato.com'; 
 
 // ==========================================
-// 2. MEDIDAS E PESO FIXOS (PADRÃO CORREIOS)
+// 2. MEDIDAS E PESO (AJUSTADOS PARA MINI ENVIOS)
 // ==========================================
-const ALTURA_FIXA = 1;       // Limite máximo do Mini Envios
-const LARGURA_FIXA = 4;     // Largura padrão segura
-const COMPRIMENTO_FIXO = 5; // Comprimento padrão seguro
-
-const pesoTotal = produtos.reduce((total, p) => total + (p.weight || 0.1), 0);
+// O peso de 0.1 garante que 3 produtos = 0.3 (limite do Mini Envios)
+const PESO_FIXO = 0.1;       
+const ALTURA_FIXA = 4;       // Limite máximo do Mini Envios é 4cm
+const LARGURA_FIXA = 12;     // Aumentado para evitar erro de dimensão mínima
+const COMPRIMENTO_FIXO = 16; // Aumentado para evitar erro de dimensão mínima
 
 app.post('/calcular-frete', async (req, res) => {
-    const { cepDestino, produtos } = req.body;
+    // Adicionei um valor padrão para produtos caso venha vazio
+    const { cepDestino, produtos = [] } = req.body;
 
-    // Limpeza de segurança do CEP
+    if (!cepDestino) {
+        return res.status(400).json({ error: "CEP de destino é obrigatório" });
+    }
+
     const cepOrigemLimpo = CEP_ORIGEM.replace(/\D/g, '');
     const cepDestinoLimpo = cepDestino.replace(/\D/g, '');
 
     console.log(`--- Iniciando cálculo: De ${cepOrigemLimpo} para ${cepDestinoLimpo} ---`);
 
-    // Formata os produtos conforme exigência da API
+    // Formata os produtos usando as constantes que definimos acima
     const produtosFormatados = produtos.map(p => ({
         weight: PESO_FIXO,
         width: LARGURA_FIXA,
@@ -41,7 +45,6 @@ app.post('/calcular-frete', async (req, res) => {
     }));
 
     try {
-        // Chamada oficial para a API v0 da SuperFrete
         const response = await axios.post('https://api.superfrete.com/api/v0/calculator', {
             from: {
                 postal_code: cepOrigemLimpo
@@ -49,7 +52,7 @@ app.post('/calcular-frete', async (req, res) => {
             to: {
                 postal_code: cepDestinoLimpo
             },
-            services: "17,1,2", // 1=SEDEX, 2=PAC, 17=MINI ENVIO
+            services: "17,1,2", // 17=MINI, 1=SEDEX, 2=PAC
             options: {
                 own_hand: false,
                 receipt: false,
@@ -66,28 +69,24 @@ app.post('/calcular-frete', async (req, res) => {
             }
         });
 
-        console.log("Sucesso! Resposta da API enviada ao frontend.");
+        console.log("Sucesso! Resposta enviada.");
         res.json(response.data);
 
     } catch (error) {
         console.error("### ERRO NA COMUNICAÇÃO ###");
-        
         if (error.response) {
-            // A API retornou um erro estruturado (ex: 400, 401)
-            console.error("Status do Erro:", error.response.status);
-            console.error("Detalhes do Erro:", JSON.stringify(error.response.data, null, 2));
+            console.error("Status:", error.response.status);
+            console.error("Detalhes:", JSON.stringify(error.response.data, null, 2));
             res.status(error.response.status).json(error.response.data);
         } else {
-            // Erro de conexão ou timeout
-            console.error("Mensagem de Erro:", error.message);
+            console.error("Mensagem:", error.message);
             res.status(500).json({ error: 'Erro de conexão com o servidor de frete' });
         }
     }
 });
 
-const PORTA = 3000;
+// Use process.env.PORT para o Render funcionar corretamente
+const PORTA = process.env.PORT || 3000;
 app.listen(PORTA, () => {
-    console.log(`=========================================`);
-    console.log(`Servidor rodando em http://localhost:${PORTA}`);
-    console.log(`=========================================`);
+    console.log(`Servidor rodando na porta ${PORTA}`);
 });
