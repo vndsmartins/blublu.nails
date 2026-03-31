@@ -10,7 +10,7 @@ app.use(cors());
 // 1. CONFIGURAÇÕES
 // ==========================================
 const SUPERFRETE_TOKEN = process.env.SUPERFRETE_TOKEN;
-const CEP_ORIGEM = '50741280'; 
+const CEP_ORIGEM = process.env.ZIP_TOKEN; 
 const SEU_EMAIL = 'blublu.nails@contato.com'; 
 
 app.post('/calcular-frete', async (req, res) => {

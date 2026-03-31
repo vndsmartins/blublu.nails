@@ -1,7 +1,7 @@
 // --- CONFIGURAÇÕES ---
 let carrinho = [];
 let freteEscolhido = null;
-const WHATSAPP_LOJA = "5581983115644"; // <--- COLOQUE SEU NÚMERO AQUI (DDI + DDD + Numero)
+const WHATSAPP_LOJA = process.env.CELL_TOKEN;; // <--- COLOQUE SEU NÚMERO AQUI (DDI + DDD + Numero)
 
 // --- FUNÇÃO ADICIONAR AO CARRINHO ---
 function adicionarAoCarrinho(nome, preco) {
