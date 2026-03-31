@@ -16,9 +16,9 @@ const SEU_EMAIL = 'seu_email@contato.com'; // Para o User-Agent
 // ==========================================
 // 2. MEDIDAS E PESO FIXOS (PADRÃO CORREIOS)
 // ==========================================
-const ALTURA_FIXA = 4;       // Limite máximo do Mini Envios
-const LARGURA_FIXA = 12;     // Largura padrão segura
-const COMPRIMENTO_FIXO = 16; // Comprimento padrão seguro
+const ALTURA_FIXA = 1;       // Limite máximo do Mini Envios
+const LARGURA_FIXA = 4;     // Largura padrão segura
+const COMPRIMENTO_FIXO = 5; // Comprimento padrão seguro
 
 const pesoTotal = produtos.reduce((total, p) => total + (p.weight || 0.1), 0);
 
