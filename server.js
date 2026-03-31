@@ -11,56 +11,60 @@ app.use(cors());
 // ==========================================
 const SUPERFRETE_TOKEN = process.env.SUPERFRETE_TOKEN;
 const CEP_ORIGEM = '50741280'; 
-const SEU_EMAIL = 'seu_email@contato.com'; 
+const SEU_EMAIL = 'botarr o email'; 
 
 // ==========================================
-// 2. MEDIDAS E PESO (AJUSTADOS PARA MINI ENVIOS)
+// 2. MEDIDAS FIXAS (PADRÃO MINI ENVIOS)
 // ==========================================
-// O peso de 0.1 garante que 3 produtos = 0.3 (limite do Mini Envios)
-const PESO_FIXO = 0.1;       
-const ALTURA_FIXA = 4;       // Limite máximo do Mini Envios é 4cm
-const LARGURA_FIXA = 12;     // Aumentado para evitar erro de dimensão mínima
-const COMPRIMENTO_FIXO = 16; // Aumentado para evitar erro de dimensão mínima
+const ALTURA_FIXA = 4;       
+const LARGURA_FIXA = 12;     
+const COMPRIMENTO_FIXO = 16; 
 
 app.post('/calcular-frete', async (req, res) => {
     try {
         const { cepDestino, produtos = [] } = req.body;
 
-        // 1. CALCULANDO O PESO TOTAL
-        // Cada produto vindo do site deve ter weight: 0.1
-        // 3 produtos = 0.3 (Limite do Mini Envios) | 4 produtos = 0.4 (Ele some!)
-        const pesoTotal = produtos.reduce((total, p) => total + (p.weight || 0.1), 0);
+        if (!cepDestino) {
+            return res.status(400).json({ error: "CEP de destino é obrigatório" });
+        }
 
-        // 2. TRAVA DE VALOR (Seguro)
-        // Somamos o valor dos produtos. Se passar de 100, fixamos em 100 para o Mini Envios não sumir por preço.
+        // 3. LÓGICA DO PESO (0.09 para permitir 3 itens no limite de 0.3)
+        // 1 item = 0.09 | 2 = 0.18 | 3 = 0.27 (OK) | 4 = 0.36 (SOME)
+        const pesoTotal = produtos.reduce((total, p) => total + (p.weight || 0.09), 0);
+
+        // 4. TRAVA DE VALOR (Limite de R$ 100 do Mini Envios)
         const valorProdutos = produtos.reduce((total, p) => total + (p.price || 0), 0);
         const valorSeguro = valorProdutos > 100 ? 100 : valorProdutos;
 
         const cepOrigemLimpo = CEP_ORIGEM.replace(/\D/g, '');
         const cepDestinoLimpo = cepDestino.replace(/\D/g, '');
 
+        console.log(`Calculando: ${produtos.length} itens, Peso Total: ${pesoTotal.toFixed(2)}kg`);
+
         const response = await axios.post('https://api.superfrete.com/api/v0/calculator', {
             from: { postal_code: cepOrigemLimpo },
             to: { postal_code: cepDestinoLimpo },
-            services: "17,1,2", // Mini Envios, SEDEX, PAC
+            services: "17,1,2", // Mini Envios (17), PAC (1), SEDEX (2)
             options: {
                 own_hand: false,
                 receipt: false,
-                insurance: valorSeguro, // Usando a nossa trava de R$ 100
+                insurance: valorSeguro, 
                 use_insurance_value: valorProdutos <= 100
             },
-            // Enviamos como um PACOTE ÚNICO para a altura não somar e banir o frete
+            // IMPORTANTE: Enviamos como pacote único para a altura não acumular
             products: [{
                 weight: pesoTotal,
-                width: 12,
-                height: 4,      // Altura fixa no limite de 4cm
-                length: 16,
+                width: LARGURA_FIXA,
+                height: ALTURA_FIXA,
+                length: COMPRIMENTO_FIXO,
                 quantity: 1
             }]
         }, {
             headers: { 
                 'Authorization': `Bearer ${SUPERFRETE_TOKEN}`,
-                'Content-Type': 'application/json'
+                'User-Agent': `BlubluNails v1.0 (${SEU_EMAIL})`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             }
         });
 
@@ -68,12 +72,11 @@ app.post('/calcular-frete', async (req, res) => {
 
     } catch (error) {
         console.error("Erro no cálculo:", error.response?.data || error.message);
-        res.status(500).json({ error: 'Erro ao calcular frete' });
+        res.status(error.response?.status || 500).json(error.response?.data || { error: 'Erro interno' });
     }
 });
 
-// Use process.env.PORT para o Render funcionar corretamente
 const PORTA = process.env.PORT || 3000;
 app.listen(PORTA, () => {
-    console.log(`Servidor rodando na porta ${PORTA}`);
+    console.log(`Servidor Blublu Nails ativo na porta ${PORTA}`);
 });
