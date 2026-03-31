@@ -23,65 +23,49 @@ const LARGURA_FIXA = 12;     // Aumentado para evitar erro de dimensão mínima
 const COMPRIMENTO_FIXO = 16; // Aumentado para evitar erro de dimensão mínima
 
 app.post('/calcular-frete', async (req, res) => {
-    // Adicionei um valor padrão para produtos caso venha vazio
     const { cepDestino, produtos = [] } = req.body;
-
-    if (!cepDestino) {
-        return res.status(400).json({ error: "CEP de destino é obrigatório" });
-    }
 
     const cepOrigemLimpo = CEP_ORIGEM.replace(/\D/g, '');
     const cepDestinoLimpo = cepDestino.replace(/\D/g, '');
 
-    console.log(`--- Iniciando cálculo: De ${cepOrigemLimpo} para ${cepDestinoLimpo} ---`);
+    // 1. Calculamos o PESO TOTAL no servidor
+    // Se cada item do site vem com peso 0.1, aqui somamos todos.
+    const pesoTotal = produtos.reduce((total, p) => total + (p.weight || 0.1), 0);
 
-    // Formata os produtos usando as constantes que definimos acima
-    const produtosFormatados = produtos.map(p => ({
-        weight: PESO_FIXO,
-        width: LARGURA_FIXA,
-        height: ALTURA_FIXA,
-        length: COMPRIMENTO_FIXO,
-        quantity: p.quantity || 1
-    }));
+    console.log(`--- Calculando Pacote Único: ${pesoTotal}kg para ${cepDestinoLimpo} ---`);
 
     try {
         const response = await axios.post('https://api.superfrete.com/api/v0/calculator', {
-            from: {
-                postal_code: cepOrigemLimpo
-            },
-            to: {
-                postal_code: cepDestinoLimpo
-            },
-            services: "17,1,2", // 17=MINI, 1=SEDEX, 2=PAC
+            from: { postal_code: cepOrigemLimpo },
+            to: { postal_code: cepDestinoLimpo },
+            services: "17,1,2",
             options: {
                 own_hand: false,
                 receipt: false,
                 insurance: 0,
                 use_insurance_value: false
             },
-            products: produtosFormatados
+            // A MUDANÇA ESTÁ AQUI: Enviamos apenas 1 "produto" que representa o pacote todo
+            products: [{
+                weight: pesoTotal,      // Peso somado (0.1, 0.2, 0.3...)
+                width: LARGURA_FIXA,    // 12
+                height: ALTURA_FIXA,    // 4 (Sempre fixo, para não banir o Mini Envios)
+                length: COMPRIMENTO_FIXO, // 16
+                quantity: 1             // Sempre 1 pacote
+            }]
         }, {
             headers: { 
                 'Authorization': `Bearer ${SUPERFRETE_TOKEN}`,
                 'User-Agent': `MinhaLoja v1.0 (${SEU_EMAIL})`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Content-Type': 'application/json'
             }
         });
 
-        console.log("Sucesso! Resposta enviada.");
         res.json(response.data);
 
     } catch (error) {
-        console.error("### ERRO NA COMUNICAÇÃO ###");
-        if (error.response) {
-            console.error("Status:", error.response.status);
-            console.error("Detalhes:", JSON.stringify(error.response.data, null, 2));
-            res.status(error.response.status).json(error.response.data);
-        } else {
-            console.error("Mensagem:", error.message);
-            res.status(500).json({ error: 'Erro de conexão com o servidor de frete' });
-        }
+        console.error("Erro detalhes:", error.response?.data);
+        res.status(500).json({ error: 'Erro no cálculo' });
     }
 });
 
