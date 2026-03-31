@@ -40,11 +40,11 @@ app.post('/calcular-frete', async (req, res) => {
             to: { postal_code: cepDestinoLimpo },
             services: "17,1,2",
             options: {
-                own_hand: false,
-                receipt: false,
-                insurance: 0,
-                use_insurance_value: false
-            },
+    own_hand: false,
+    receipt: false,
+    insurance: 0,              // Valor do seguro zerado
+    use_insurance_value: false // Diz para NÃO usar o valor dos produtos para seguro
+},
             // A MUDANÇA ESTÁ AQUI: Enviamos apenas 1 "produto" que representa o pacote todo
             products: [{
                 weight: pesoTotal,      // Peso somado (0.1, 0.2, 0.3...)
