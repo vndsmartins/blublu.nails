@@ -5,13 +5,16 @@ const WHATSAPP_LOJA = "5581983115644"; // <--- COLOQUE SEU NÚMERO AQUI (DDI + D
 
 // --- FUNÇÃO ADICIONAR AO CARRINHO ---
 function adicionarAoCarrinho(nome, preco) {
-    // Peso de 50g para garantir que o Mini Envios apareça
-    carrinho.push({ name: nome, price: preco, weight: 0.05 });
+    // Cada item pesa exatamente 0.1kg (100g)
+    // 1 item = 0.1 | 2 itens = 0.2 | 3 itens = 0.3 (LIMITE) | 4 itens = 0.4 (BLOQUEIA)
+    carrinho.push({ 
+        name: nome, 
+        price: preco, 
+        weight: 0.1 
+    });
     
-    // Reseta o frete pois o carrinho mudou
     freteEscolhido = null; 
     document.getElementById('area-finalizar').classList.add('hidden');
-    
     atualizarCarrinho();
 }
 

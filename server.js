@@ -16,10 +16,11 @@ const SEU_EMAIL = 'seu_email@contato.com'; // Para o User-Agent
 // ==========================================
 // 2. MEDIDAS E PESO FIXOS (PADRÃO CORREIOS)
 // ==========================================
-const PESO_FIXO = 0.01;        // 500 gramas
-const ALTURA_FIXA = 4;      // 10 cm
-const LARGURA_FIXA = 10;     // 15 cm
-const COMPRIMENTO_FIXO = 13; // 20 cm
+const ALTURA_FIXA = 4;       // Limite máximo do Mini Envios
+const LARGURA_FIXA = 12;     // Largura padrão segura
+const COMPRIMENTO_FIXO = 16; // Comprimento padrão seguro
+
+const pesoTotal = produtos.reduce((total, p) => total + (p.weight || 0.1), 0);
 
 app.post('/calcular-frete', async (req, res) => {
     const { cepDestino, produtos } = req.body;
