@@ -7,18 +7,11 @@ app.use(express.json());
 app.use(cors());
 
 // ==========================================
-// 1. CONFIGURAÇÕES OBRIGATÓRIAS
+// 1. CONFIGURAÇÕES
 // ==========================================
 const SUPERFRETE_TOKEN = process.env.SUPERFRETE_TOKEN;
 const CEP_ORIGEM = '50741280'; 
-const SEU_EMAIL = 'botarr o email'; 
-
-// ==========================================
-// 2. MEDIDAS FIXAS (PADRÃO MINI ENVIOS)
-// ==========================================
-const ALTURA_FIXA = 4;       
-const LARGURA_FIXA = 12;     
-const COMPRIMENTO_FIXO = 16; 
+const SEU_EMAIL = 'blublu.nails@contato.com'; 
 
 app.post('/calcular-frete', async (req, res) => {
     try {
@@ -28,35 +21,42 @@ app.post('/calcular-frete', async (req, res) => {
             return res.status(400).json({ error: "CEP de destino é obrigatório" });
         }
 
-        // 3. LÓGICA DO PESO (0.09 para permitir 3 itens no limite de 0.3)
-        // 1 item = 0.09 | 2 = 0.18 | 3 = 0.27 (OK) | 4 = 0.36 (SOME)
-        const pesoTotal = produtos.reduce((total, p) => total + (p.weight || 0.09), 0);
+        // --- TRAVA DE SEGURANÇA DE PESO ---
+        const quantidade = produtos.length;
+        let pesoParaEnvio;
 
-        // 4. TRAVA DE VALOR (Limite de R$ 100 do Mini Envios)
-        const valorProdutos = produtos.reduce((total, p) => total + (p.price || 0), 0);
-        const valorSeguro = valorProdutos > 100 ? 100 : valorProdutos;
+        if (quantidade === 1) {
+            pesoParaEnvio = 0.10; 
+        } else if (quantidade === 2) {
+            pesoParaEnvio = 0.20; 
+        } else if (quantidade === 3) {
+            pesoParaEnvio = 0.28; // Garante Mini Envios (limite é 0.30)
+        } else {
+            pesoParaEnvio = 0.40; // Bloqueia Mini Envios acima de 3 itens
+        }
 
-        const cepOrigemLimpo = CEP_ORIGEM.replace(/\D/g, '');
-        const cepDestinoLimpo = cepDestino.replace(/\D/g, '');
+        // --- TRAVA DE SEGURANÇA DE VALOR (R$ 100) ---
+        const valorTotalReal = produtos.reduce((total, p) => total + (p.price || 0), 0);
+        const valorSeguroParaAPI = valorTotalReal > 100 ? 100 : valorTotalReal;
 
-        console.log(`Calculando: ${produtos.length} itens, Peso Total: ${pesoTotal.toFixed(2)}kg`);
+        console.log(`Itens: ${quantidade} | Peso: ${pesoParaEnvio}kg | Seguro: R$ ${valorSeguroParaAPI}`);
 
+        // CHAMADA ÚNICA PARA A API (Atenção: só deve existir um 'const response' aqui)
         const response = await axios.post('https://api.superfrete.com/api/v0/calculator', {
-            from: { postal_code: cepOrigemLimpo },
-            to: { postal_code: cepDestinoLimpo },
-            services: "17,1,2", // Mini Envios (17), PAC (1), SEDEX (2)
+            from: { postal_code: CEP_ORIGEM.replace(/\D/g, '') },
+            to: { postal_code: cepDestino.replace(/\D/g, '') },
+            services: "17,1,2",
             options: {
                 own_hand: false,
                 receipt: false,
-                insurance: valorSeguro, 
-                use_insurance_value: valorProdutos <= 100
+                insurance: valorSeguroParaAPI,
+                use_insurance_value: valorTotalReal <= 100
             },
-            // IMPORTANTE: Enviamos como pacote único para a altura não acumular
             products: [{
-                weight: pesoTotal,
-                width: LARGURA_FIXA,
-                height: ALTURA_FIXA,
-                length: COMPRIMENTO_FIXO,
+                weight: pesoParaEnvio,
+                width: 12,
+                height: 4,
+                length: 16,
                 quantity: 1
             }]
         }, {
@@ -68,6 +68,7 @@ app.post('/calcular-frete', async (req, res) => {
             }
         });
 
+        // Envia a resposta da API de volta para o seu site
         res.json(response.data);
 
     } catch (error) {
