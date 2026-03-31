@@ -64,6 +64,8 @@ async function calcularFrete() {
         const dados = await response.json();
         const opcoes = Array.isArray(dados) ? dados : (dados.options || []);
 
+        opcoes.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+
         if (opcoes.length === 0) {
             resDiv.innerHTML = "<p class='text-red-500 text-center'>Nenhum frete disponível para este CEP.</p>";
             return;
