@@ -16,7 +16,7 @@ const SEU_EMAIL = 'seu_email@contato.com'; // Para o User-Agent
 // ==========================================
 // 2. MEDIDAS E PESO FIXOS (PADRÃO CORREIOS)
 // ==========================================
-const PESO_FIXO = 0.1;        // 500 gramas
+const PESO_FIXO = 0.01;        // 500 gramas
 const ALTURA_FIXA = 4;      // 10 cm
 const LARGURA_FIXA = 10;     // 15 cm
 const COMPRIMENTO_FIXO = 13; // 20 cm
